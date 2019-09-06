@@ -1,0 +1,48 @@
+desc:MIDI Note Generator
+//author: Alec "Chootin" Tutin
+
+slider1:1<0,1,1{Off,On}>Enabled
+slider2:48<0,11,0{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Note
+slider3:48<0,10,0{0,1,2,3,4,5,6,7,8,9,10}>Octave
+slider4:64<0,127,1>Velocity
+slider5:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
+
+@init
+NOTE_ON = $x90;
+NOTE_OFF = $x80;
+
+noteChanged = 1;
+octave = 4;
+note = 0;
+noteValue = octave * 12 + note;
+outChannel = 1;
+lastNote = noteValue;
+lastChannel = outChannel;
+
+@slider
+enabled = slider1;
+enabled ? (
+  note = slider2;
+  octave = slider3;
+  noteValue = octave * 12 + note;
+  velocity = slider4;
+  outChannel = slider5;
+);
+valuesChanged = 1;
+
+@block
+enabled ? (
+  noteChanged ? (
+    midisend(lastChannel, NOTE_OFF, lastNote, 0);
+    midisend(outChannel, NOTE_ON, noteValue, velocity);
+    
+    lastNote = noteValue;
+    lastChannel = outChannel;
+    
+    valuesChanged = 0;
+  );
+) : (
+  valuesChanged ? (
+    midisend(lastChannel, NOTE_OFF, lastNote, 0);
+  );
+);
